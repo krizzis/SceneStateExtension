@@ -1,0 +1,6 @@
+dist/
+node_modules/
+.agents/
+codex_context.md
+skills-lock.json
+src/types/sillytavern.d.ts

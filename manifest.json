@@ -1,0 +1,9 @@
+{
+  "display_name": "SceneState Extension",
+  "loading_order": 10,
+  "js": "index.js",
+  "css": "style.css",
+  "author": "SoulForge Project",
+  "version": "0.1.0",
+  "homePage": ""
+}
