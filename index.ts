@@ -2,7 +2,6 @@
 import {
   extension_settings,
   getContext,
-  loadExtensionSettings,
   renderExtensionTemplateAsync,
 } from "../../../extensions.js";
 // @ts-ignore Runtime-provided SillyTavern module.
@@ -29,7 +28,6 @@ import {
 } from "./src/shared/models/settings";
 
 const EXTENSION_NAME = "scene-state-extension";
-const EXTENSION_PATH = "third-party/scene-state-extension";
 const SETTINGS_ROOT_SELECTOR = "#extensions_settings2";
 const MESSAGE_EVENT_CANDIDATES = [
   "CHARACTER_MESSAGE_RENDERED",
@@ -44,6 +42,19 @@ const logger = createLogger(EXTENSION_NAME, () => settings.debug_mode);
 const services = createServices();
 const subscribedRuntimeEvents = new Set<unknown>();
 const lastProcessedMessageByChat = new Map<string, string>();
+
+function getExtensionRuntimePath(): string {
+  const currentScriptUrl = new URL(import.meta.url);
+  const match = currentScriptUrl.pathname.match(/\/scripts\/extensions\/(.+)\/index\.js$/);
+
+  if (!match?.[1]) {
+    return "third-party/scene-state-extension";
+  }
+
+  return decodeURIComponent(match[1]);
+}
+
+const EXTENSION_PATH = getExtensionRuntimePath();
 
 function readBooleanSetting(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
@@ -291,7 +302,6 @@ function registerEventHandlers(): void {
 
 jQuery(async () => {
   extension_settings[EXTENSION_NAME] = extension_settings[EXTENSION_NAME] ?? {};
-  await loadExtensionSettings(EXTENSION_NAME);
 
   settings = readStoredSettings();
   persistSettings(settings);

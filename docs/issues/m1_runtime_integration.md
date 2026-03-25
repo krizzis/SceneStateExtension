@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned
+Implemented
 
 ---
 
@@ -53,9 +53,18 @@ After this issue is complete:
 - chat initialization should remain safe when runtime context is incomplete
 - the M1 debug flow should be easier to validate in a live SillyTavern session
 
+## Actual Outcome
+
+- runtime event handling was adapted to the current SillyTavern API shape
+- startup no longer relies on an outdated `loadExtensionSettings(extensionName)` pattern
+- template rendering now resolves the runtime extension path dynamically
+- settings render successfully in the Extensions UI for installed copies
+- installer-compatible repository layout was prepared on the release-oriented branch
+
 ---
 
 ## Notes
 
 - This issue is implementation-focused, not only a manual test task.
 - Manual smoke-testing in SillyTavern is still needed after the code changes land.
+- A small cosmetic drawer-state mismatch remains and is intentionally deferred.

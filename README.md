@@ -7,6 +7,8 @@ Current repository status:
 - Milestone 1 scaffold is implemented
 - build output is generated into `dist/`
 - runtime flow currently focuses on settings, chat-bound in-memory state, stub analysis, and prompt logging
+- the extension settings now render inside the SillyTavern Extensions UI
+- the `codex/release` branch is prepared for Git installer based installation
 
 ## Requirements
 
@@ -68,6 +70,8 @@ The installer-facing runtime files expected in the repo root are:
 - `settings.html`
 - `style.css`
 
+When testing installation through the SillyTavern Git extension installer, use the release-oriented branch rather than a development branch that only keeps runtime assets in `dist/`.
+
 ## Type Check
 
 ```bash
@@ -90,6 +94,23 @@ npm.cmd run typecheck
 6. Open a chat with a character whose card contains an `[Outfit]` section and whose scenario contains a `[Location]: ...` line.
 7. Send or generate a character reply and inspect SillyTavern console logs.
 
+## Install Through Git Installer
+
+For installer-based setup, use the release-oriented branch that exposes runtime files in the repository root.
+
+Expected root runtime files:
+
+- `manifest.json`
+- `index.js`
+- `settings.html`
+- `style.css`
+
+After installation:
+
+1. Reload SillyTavern.
+2. Open the Extensions panel.
+3. Confirm that `SceneState Extension` appears in the settings list.
+
 ## Expected M1 Runtime Behavior
 
 - settings render in the Extensions UI
@@ -104,3 +125,4 @@ npm.cmd run typecheck
 
 - `dist/` is the installable artifact for the current build.
 - SQLite, real LLM integration, and native prompt injection are not part of the current M1 runtime.
+- Known UI issue: the SceneState inline drawer currently has a mismatched initial open/closed visual state. This is cosmetic and will be fixed later.

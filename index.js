@@ -2,7 +2,6 @@
 import {
   extension_settings,
   getContext,
-  loadExtensionSettings,
   renderExtensionTemplateAsync
 } from "../../../extensions.js";
 import {
@@ -391,7 +390,6 @@ var DEFAULT_EXTENSION_SETTINGS = {
 
 // index.ts
 var EXTENSION_NAME = "scene-state-extension";
-var EXTENSION_PATH = "third-party/scene-state-extension";
 var SETTINGS_ROOT_SELECTOR = "#extensions_settings2";
 var MESSAGE_EVENT_CANDIDATES = [
   "CHARACTER_MESSAGE_RENDERED",
@@ -404,6 +402,15 @@ var logger = createLogger(EXTENSION_NAME, () => settings.debug_mode);
 var services = createServices();
 var subscribedRuntimeEvents = /* @__PURE__ */ new Set();
 var lastProcessedMessageByChat = /* @__PURE__ */ new Map();
+function getExtensionRuntimePath() {
+  const currentScriptUrl = new URL(import.meta.url);
+  const match = currentScriptUrl.pathname.match(/\/scripts\/extensions\/(.+)\/index\.js$/);
+  if (!match?.[1]) {
+    return "third-party/scene-state-extension";
+  }
+  return decodeURIComponent(match[1]);
+}
+var EXTENSION_PATH = getExtensionRuntimePath();
 function readBooleanSetting(value, fallback) {
   return typeof value === "boolean" ? value : fallback;
 }
@@ -602,7 +609,6 @@ function registerEventHandlers() {
 }
 jQuery(async () => {
   extension_settings[EXTENSION_NAME] = extension_settings[EXTENSION_NAME] ?? {};
-  await loadExtensionSettings(EXTENSION_NAME);
   settings = readStoredSettings();
   persistSettings(settings);
   await renderSettings();

@@ -1,13 +1,7 @@
 .scene-state-extension_settings {
   display: grid;
   gap: 12px;
-  padding: 8px 0;
-}
-
-.scene-state-extension_title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
+  padding-top: 8px;
 }
 
 .scene-state-extension_row {
