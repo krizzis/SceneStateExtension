@@ -99,12 +99,13 @@ No LLM is used during initialization.
 ## Update Flow
 
 1. New character message is received
-2. Context Analyzer produces structured diff
-3. State Store applies diff:
+2. The latest user message and the responding character message are grouped into one analysis turn when available
+3. Context Analyzer produces structured diff
+4. State Store applies diff:
 
    * updates only changed fields
    * respects null semantics
-4. Metadata is updated:
+5. Metadata is updated:
 
    * timestamp
    * source_message_id

@@ -5,8 +5,9 @@
 ### 1. Message Processing
 
 * The extension must detect new messages in the chat
-* The extension must process only **character messages**
-* The extension must ignore user messages
+* The extension must trigger analysis only when a **character message** is received
+* The extension must pair the latest user message with the responding character message and treat them as one analysis unit
+* The extension must not analyze user messages independently from the paired character response
 
 ---
 
@@ -15,9 +16,11 @@
 * The extension must trigger analysis after each character message
 * The extension must collect context based on settings:
 
-  * last message only
-  * recent window of messages
+  * last turn only
+  * recent window of turns
 * The extension must support configurable window size
+* Each turn must preserve the ordered `user -> character` structure when both messages are present
+* If no immediately preceding user message exists, the character message may form a single-message turn
 
 ---
 
@@ -107,7 +110,7 @@
 The extension must provide a settings panel with:
 
 * enabled (on/off)
-* analysis mode (last_message / recent_window)
+* analysis mode (last_turn / recent_turns)
 * window size (numeric)
 * debug mode (on/off)
 

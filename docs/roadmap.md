@@ -31,7 +31,7 @@ The roadmap assumes the documented MVP boundaries remain unchanged:
 - single character only
 - one current state per chat session
 - no state history
-- analyze character messages only
+- trigger analysis on character messages and analyze `user + character` turn pairs
 - LLM used only for structured context analysis
 - prompt generation must be deterministic in code
 - native SillyTavern image generation pipeline must be preserved
@@ -154,16 +154,16 @@ Prepare the correct chat context for analysis.
 
 ### Issues
 
-#### 1. Implement context collector for `last_message` mode
+#### 1. Implement context collector for `last_turn` mode
 
-- Scope: collect only the latest character message
+- Scope: collect only the latest `user + character` turn
 - Output: normalized context payload
-- Acceptance criteria: user messages are excluded from the payload
+- Acceptance criteria: the paired user message is included only as part of the same turn as the character response
 
-#### 2. Implement context collector for `recent_window` mode
+#### 2. Implement context collector for `recent_turns` mode
 
-- Scope: collect a window of recent messages using `window_size`
-- Output: normalized ordered message payload
+- Scope: collect a window of recent turns using `window_size`
+- Output: normalized ordered turn payload
 - Acceptance criteria: collector respects ordering and configured window size
 
 #### 3. Normalize context payload format
@@ -226,7 +226,7 @@ Integrate analysis into the chat runtime flow without blocking the UI.
 
 - Scope: distinguish character messages from user messages
 - Output: message source guard
-- Acceptance criteria: user messages never trigger analysis
+- Acceptance criteria: user messages never trigger analysis by themselves
 
 #### 3. Trigger asynchronous analysis after character messages
 
@@ -437,7 +437,7 @@ If implementation should begin with the smallest useful set of tasks, start with
 2. Implement state diff application logic
 3. Implement initial state creation flow
 4. Design SQLite schema for current scene state
-5. Implement context collector for `last_message` mode
+5. Implement context collector for `last_turn` mode
 6. Implement LLM response validation and normalization
 
 ---
@@ -465,8 +465,8 @@ Background management can be implemented slightly later if the team wants to pri
 
 The MVP can be considered complete when:
 
-- the extension tracks character messages only
-- each character message can trigger a safe analysis pipeline
+- the extension triggers analysis from character messages only
+- each character message can trigger a safe analysis pipeline using the paired `user + character` turn
 - current state updates are applied predictably and persisted
 - prompt generation is deterministic and code-driven
 - prompt injection works through the native SillyTavern image generation flow

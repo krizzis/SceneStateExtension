@@ -21,13 +21,14 @@ Contracts must remain stable to ensure predictable behavior and safe integration
 #### Input
 
 - chat session identifier
-- analysis mode (last_message | recent_window)
+- analysis mode (last_turn | recent_turns)
 - window size
 
 #### Output
 
-- normalized context payload (ordered messages)
-- includes only character messages
+- normalized context payload (ordered turns)
+- each turn contains the paired user message and character response when available
+- user messages are not emitted as standalone analysis items
 
 #### Rules
 
@@ -171,6 +172,7 @@ Contracts must remain stable to ensure predictable behavior and safe integration
 #### Rules
 
 - only character messages trigger analysis flow
+- the analysis payload for a character message may include the immediately preceding user message as part of the same turn
 - must not block UI thread
 
 ---

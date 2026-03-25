@@ -4,7 +4,7 @@
 
 SceneState Extension is a SillyTavern extension that tracks and maintains the current scene state of a single active character during a chat session.
 
-The extension automatically analyzes character messages, extracts structured scene attributes, and uses this data to:
+The extension automatically analyzes chat turn pairs composed of the latest user message and the responding character message, extracts structured scene attributes, and uses this data to:
 
 * Maintain up-to-date scene context
 * Dynamically update chat background based on location
@@ -20,7 +20,8 @@ This project implements a minimal, stable, and deterministic system with the fol
 
 * Tracks **one active character per chat session**
 * State is updated **after each character message**
-* Only **character messages** are analyzed (user messages are ignored)
+* Analysis is triggered by a **character message**, but the analyzed context unit is the paired **user message + character message**
+* User messages are not analyzed independently; they are only included together with the responding character message
 
 ### 2. State Structure
 
@@ -120,8 +121,8 @@ Minimal settings panel:
 * enabled (boolean)
 * analysis_mode:
 
-  * last_message
-  * recent_window
+  * last_turn
+  * recent_turns
 * window_size (number)
 * debug_mode (boolean)
 
@@ -134,7 +135,7 @@ The extension is composed of the following modules:
 ### 1. Context Analyzer
 
 * Triggered after each character message
-* Collects context (based on settings)
+* Collects context (based on settings) as one or more ordered `user + character` turn pairs
 * Sends request to LLM
 * Receives structured diff
 
@@ -186,7 +187,7 @@ The extension is composed of the following modules:
 
 * Multiple characters
 * State history / memory system
-* User message analysis
+* Standalone user message analysis without the paired character response
 * Automatic image generation triggers
 * Complex scene segmentation
 * Multi-workflow routing

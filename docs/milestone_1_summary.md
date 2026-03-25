@@ -16,7 +16,7 @@ Milestone 1 includes:
 - minimal extension manifest and runtime assets
 - settings UI and settings persistence wiring
 - runtime enable/disable guard
-- character-message-only processing flow
+- character-triggered processing flow
 - lazy chat-bound in-memory scene state initialization
 - scenario location parsing from `[Location]: <value>`
 - character card outfit parsing from `[Outfit]`
@@ -127,7 +127,7 @@ Milestone 1 is complete when:
 - the extension builds successfully into `dist/`
 - `dist/` contains an installable extension artifact
 - settings render and save
-- the extension processes only character messages
+- the extension triggers processing only on character messages
 - a chat can initialize an in-memory current state
 - a deterministic danbooru-style prompt is built from the current state
 - debug logs make the full M1 flow observable

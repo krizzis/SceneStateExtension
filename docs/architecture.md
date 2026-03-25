@@ -9,6 +9,7 @@ The architecture is designed around small, clearly separated modules with determ
 The extension must:
 
 - observe character messages
+- pair each analyzed character reply with the immediately preceding user message when available
 - analyze scene changes through an LLM
 - update and persist current state
 - update chat background on confirmed location change
@@ -37,7 +38,7 @@ Responsibilities:
 
 - detect new chat messages
 - filter character messages
-- trigger analysis flow
+- trigger analysis flow on character replies
 - hook into native image generation pipeline
 - expose settings UI hooks
 - emit debug logs to SillyTavern
@@ -54,9 +55,10 @@ Responsibilities:
 
 - read current chat session context
 - apply configured analysis mode:
-  - last_message
-  - recent_window
+  - last_turn
+  - recent_turns
 - apply configured window size
+- pair user and character messages into ordered turns
 - return normalized context payload for analysis
 
 This module is responsible only for context extraction, not interpretation.
@@ -204,9 +206,9 @@ Responsibilities:
 
 1. Event Integration Layer receives new message event
 2. Message is checked:
-   - if user message → ignore
+   - if user message → do not trigger analysis yet
    - if character message → continue
-3. Context Collector gathers analysis input
+3. Context Collector gathers analysis input as one or more ordered `user + character` turns
 4. Context Analyzer sends request through LLM Adapter
 5. LLM Adapter returns normalized structured diff
 6. State Store applies diff and persists updated current state
@@ -381,7 +383,7 @@ If persistence fails:
 - single active character only
 - one current state per chat session
 - no state history
-- no user message analysis
+- no standalone user message analysis outside the paired turn with the responding character message
 - no LLM-based prompt generation
 - no replacement of native SillyTavern image generation system
 

@@ -68,7 +68,7 @@ Codex must not:
 - expand MVP scope without explicit instruction
 - introduce multi-character logic
 - add state history or memory systems
-- add user-message analysis
+- add standalone user-message analysis outside the paired turn with the responding character message
 - replace native SillyTavern image generation flow
 - use LLM for prompt generation
 - rewrite unrelated modules

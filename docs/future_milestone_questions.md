@@ -30,7 +30,7 @@ The goal is to keep Milestone 1 implementation unblocked while preserving the op
 
 - What exact SillyTavern chat data shape should be treated as the source of truth for recent-window collection?
 - How should message ordering be derived when SillyTavern context fields differ between versions?
-- Should analysis context include only character messages or preserve nearby user turns in later milestones?
+- What exact pairing rule should be used when multiple user messages appear before one character reply?
 
 ---
 
