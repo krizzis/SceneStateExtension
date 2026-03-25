@@ -1,3 +1,5 @@
+import type { AnalysisMessage } from "../../shared/contracts/services";
+
 function readStringCandidate(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
@@ -102,12 +104,12 @@ function getNumericMessageIndex(payloadObject: Record<string, unknown>): number 
   return null;
 }
 
-export function getLatestMessageFromPayload(
+export function getMessageIndexFromPayload(
   payload: unknown,
   context: unknown,
-): unknown {
+): number | null {
   if (typeof payload === "number" && Number.isInteger(payload) && payload >= 0) {
-    return getMessageByIndex(context, payload) ?? getLatestMessageFromContext(context);
+    return payload;
   }
 
   if (payload && typeof payload === "object") {
@@ -115,23 +117,42 @@ export function getLatestMessageFromPayload(
     const numericIndex = getNumericMessageIndex(payloadObject);
 
     if (numericIndex !== null) {
-      const indexedMessage = getMessageByIndex(context, numericIndex);
-      if (indexedMessage) {
-        return indexedMessage;
+      return numericIndex;
+    }
+
+    const directMessage =
+      payloadObject.message && typeof payloadObject.message === "object"
+        ? payloadObject.message
+        : payloadObject.mes && typeof payloadObject.mes === "object"
+          ? payloadObject.mes
+          : "is_user" in payloadObject || "mes" in payloadObject || "name" in payloadObject
+            ? payloadObject
+            : null;
+
+    if (directMessage) {
+      const chat = getChatMessages(context);
+      const directMessageId = getMessageSourceId(directMessage);
+
+      for (let index = chat.length - 1; index >= 0; index -= 1) {
+        if (getMessageSourceId(chat[index], index) === directMessageId) {
+          return index;
+        }
       }
     }
+  }
 
-    if (payloadObject.message && typeof payloadObject.message === "object") {
-      return payloadObject.message;
-    }
+  const chat = getChatMessages(context);
+  return chat.length > 0 ? chat.length - 1 : null;
+}
 
-    if (payloadObject.mes && typeof payloadObject.mes === "object") {
-      return payloadObject.mes;
-    }
+export function getLatestMessageFromPayload(
+  payload: unknown,
+  context: unknown,
+): unknown {
+  const messageIndex = getMessageIndexFromPayload(payload, context);
 
-    if ("is_user" in payloadObject || "mes" in payloadObject || "name" in payloadObject) {
-      return payloadObject;
-    }
+  if (messageIndex !== null) {
+    return getMessageByIndex(context, messageIndex) ?? getLatestMessageFromContext(context);
   }
 
   return getLatestMessageFromContext(context);
@@ -152,6 +173,77 @@ export function isCharacterMessage(message: unknown): boolean {
   }
 
   return true;
+}
+
+function isUserMessage(message: unknown): boolean {
+  if (!message || typeof message !== "object") {
+    return false;
+  }
+
+  const messageObject = message as Record<string, unknown>;
+  const role = readStringCandidate(messageObject.role).toLowerCase();
+
+  return messageObject.is_user === true || role === "user";
+}
+
+function isSystemMessage(message: unknown): boolean {
+  if (!message || typeof message !== "object") {
+    return false;
+  }
+
+  const messageObject = message as Record<string, unknown>;
+  const role = readStringCandidate(messageObject.role).toLowerCase();
+
+  return messageObject.is_system === true || role === "system";
+}
+
+function getMessageText(message: unknown): string {
+  if (!message || typeof message !== "object") {
+    return "";
+  }
+
+  const messageObject = message as Record<string, unknown>;
+  const candidates = [messageObject.mes, messageObject.text, messageObject.content];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return "";
+}
+
+export function getAnalysisMessages(context: unknown): ReadonlyArray<AnalysisMessage> {
+  const chat = getChatMessages(context);
+  const normalizedMessages: AnalysisMessage[] = [];
+
+  for (let index = 0; index < chat.length; index += 1) {
+    const message = chat[index];
+
+    if (isSystemMessage(message)) {
+      continue;
+    }
+
+    const role = isUserMessage(message)
+      ? "user"
+      : isCharacterMessage(message)
+        ? "character"
+        : null;
+    if (!role) {
+      continue;
+    }
+
+    normalizedMessages.push({
+      sourceId: getMessageSourceId(message, index),
+      role,
+      text: getMessageText(message),
+      name: readStringCandidate(readObjectCandidate(message).name) || null,
+      rawIndex: index,
+    });
+  }
+
+  return normalizedMessages;
 }
 
 export function getMessageSourceId(message: unknown, fallbackIndex?: number): string {
@@ -190,7 +282,7 @@ export function getMessageDebugSignature(message: unknown): string {
   const parts = [
     getMessageSourceId(message),
     readStringCandidate(messageObject.name),
-    readStringCandidate(messageObject.mes),
+    getMessageText(message),
   ];
 
   return parts.join("|");

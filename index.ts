@@ -13,9 +13,11 @@ import {
 import { createServices } from "./src/bootstrap/create-services";
 import {
   getActiveChatId,
+  getAnalysisMessages,
   getCharacterDescriptionText,
   getLatestMessageFromPayload,
   getMessageDebugSignature,
+  getMessageIndexFromPayload,
   getMessageSourceId,
   getScenarioText,
   isCharacterMessage,
@@ -61,7 +63,11 @@ function readBooleanSetting(value: unknown, fallback: boolean): boolean {
 }
 
 function readAnalysisModeSetting(value: unknown): AnalysisMode {
-  return value === "recent_window" ? "recent_window" : "last_message";
+  if (value === "recent_turns" || value === "recent_window") {
+    return "recent_turns";
+  }
+
+  return "last_turn";
 }
 
 function readWindowSizeSetting(value: unknown, fallback: number): number {
@@ -224,17 +230,44 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
   lastProcessedMessageByChat.set(chatId, messageSignature);
   initializeChatStateFromContext(context);
 
+  const triggerRawIndex = getMessageIndexFromPayload(payload, context);
+  if (triggerRawIndex === null) {
+    logger.debug("Skipped analysis because trigger message index could not be resolved.", {
+      chatId,
+      payload,
+    });
+    return;
+  }
+
+  const turns = services.contextCollector.collect(
+    getAnalysisMessages(context),
+    triggerRawIndex,
+    settings.analysis_mode,
+    settings.window_size,
+  );
+  if (turns.length === 0) {
+    logger.debug("Skipped analysis because no turn payload could be built.", {
+      chatId,
+      triggerRawIndex,
+    });
+    return;
+  }
+
   const analysisResult = await services.analyzer.analyze({
     chatId,
-    message,
+    turns,
     analysisMode: settings.analysis_mode,
     windowSize: settings.window_size,
   });
 
-  logger.debug("Analyzer result received.", { chatId, analysisResult });
+  logger.debug("Analyzer result received.", {
+    chatId,
+    turns,
+    analysisResult,
+  });
 
   services.stateStore.applyDiff(chatId, analysisResult.diff, {
-    sourceMessageId: getMessageSourceId(message),
+    sourceMessageId: getMessageSourceId(message, triggerRawIndex),
     confidence: 0,
   });
 

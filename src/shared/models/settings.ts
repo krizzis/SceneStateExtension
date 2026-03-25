@@ -1,4 +1,4 @@
-export type AnalysisMode = "last_message" | "recent_window";
+export type AnalysisMode = "last_turn" | "recent_turns";
 
 export interface ExtensionSettings {
   enabled: boolean;
@@ -9,7 +9,7 @@ export interface ExtensionSettings {
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   enabled: true,
-  analysis_mode: "last_message",
+  analysis_mode: "last_turn",
   window_size: 5,
   debug_mode: false,
 };
