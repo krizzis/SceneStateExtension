@@ -1,33 +1,45 @@
-<div class="scene-state-extension_settings">
-  <div class="scene-state-extension_row">
-    <label class="checkbox_label" for="scene-state-extension_enabled">
-      <input id="scene-state-extension_enabled" type="checkbox" />
-      <span>Enabled</span>
-    </label>
-  </div>
+<div id="scene-state-extension_container" class="extension_container">
+  <div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+      <b>SceneState Extension</b>
+      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div
+      id="scene-state-extension_settings"
+      class="inline-drawer-content scene-state-extension_settings"
+    >
+      <div class="scene-state-extension_row">
+        <label class="checkbox_label" for="scene-state-extension_enabled">
+          <input id="scene-state-extension_enabled" type="checkbox" />
+          <span>Enabled</span>
+        </label>
+      </div>
 
-  <div class="scene-state-extension_row">
-    <label for="scene-state-extension_analysis_mode">Analysis mode</label>
-    <select id="scene-state-extension_analysis_mode">
-      <option value="last_message">Last message</option>
-      <option value="recent_window">Recent window</option>
-    </select>
-  </div>
+      <div class="scene-state-extension_row">
+        <label for="scene-state-extension_analysis_mode">Analysis mode</label>
+        <select id="scene-state-extension_analysis_mode" class="text_pole">
+          <option value="last_message">Last message</option>
+          <option value="recent_window">Recent window</option>
+        </select>
+      </div>
 
-  <div class="scene-state-extension_row">
-    <label for="scene-state-extension_window_size">Window size</label>
-    <input
-      id="scene-state-extension_window_size"
-      type="number"
-      min="1"
-      step="1"
-    />
-  </div>
+      <div class="scene-state-extension_row">
+        <label for="scene-state-extension_window_size">Window size</label>
+        <input
+          id="scene-state-extension_window_size"
+          class="text_pole"
+          type="number"
+          min="1"
+          step="1"
+        />
+      </div>
 
-  <div class="scene-state-extension_row">
-    <label class="checkbox_label" for="scene-state-extension_debug_mode">
-      <input id="scene-state-extension_debug_mode" type="checkbox" />
-      <span>Debug mode</span>
-    </label>
+      <div class="scene-state-extension_row">
+        <label class="checkbox_label" for="scene-state-extension_debug_mode">
+          <input id="scene-state-extension_debug_mode" type="checkbox" />
+          <span>Debug mode</span>
+        </label>
+      </div>
+    </div>
   </div>
 </div>

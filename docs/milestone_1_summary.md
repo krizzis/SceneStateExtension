@@ -23,6 +23,7 @@ Milestone 1 includes:
 - stub analyzer flow returning an empty diff
 - deterministic prompt building in danbooru-style tag format
 - debug logging for state, normalized tags, and final prompt string
+- successful rendering of extension settings in the SillyTavern Extensions UI
 
 ---
 
@@ -50,6 +51,7 @@ Milestone 1 includes:
 - prompt injection is not implemented in M1
 - background matching is not implemented in M1
 - analyzer flow is present but stubbed with a no-op diff
+- Git-installer compatibility is supported through a release-oriented branch layout
 
 ### Initialization Rules
 
@@ -129,3 +131,7 @@ Milestone 1 is complete when:
 - a chat can initialize an in-memory current state
 - a deterministic danbooru-style prompt is built from the current state
 - debug logs make the full M1 flow observable
+
+## Known M1 Follow-Up
+
+- The inline drawer for the extension settings currently has a cosmetic mismatch between the icon state and the content visibility state on first render.

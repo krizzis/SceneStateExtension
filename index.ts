@@ -2,7 +2,6 @@
 import {
   extension_settings,
   getContext,
-  loadExtensionSettings,
   renderExtensionTemplateAsync,
 } from "../../../extensions.js";
 // @ts-ignore Runtime-provided SillyTavern module.
@@ -16,9 +15,11 @@ import {
   getActiveChatId,
   getCharacterDescriptionText,
   getLatestMessageFromPayload,
+  getMessageDebugSignature,
+  getMessageSourceId,
   getScenarioText,
   isCharacterMessage,
-} from "./src/integration/context/st-context";
+} from "./src/integration/context/st-runtime-context";
 import { createLogger } from "./src/integration/logging/logger";
 import {
   DEFAULT_EXTENSION_SETTINGS,
@@ -28,13 +29,32 @@ import {
 
 const EXTENSION_NAME = "scene-state-extension";
 const SETTINGS_ROOT_SELECTOR = "#extensions_settings2";
-const MESSAGE_EVENT_CANDIDATES = ["MESSAGE_RECEIVED", "CHARACTER_MESSAGE_RENDERED"];
+const MESSAGE_EVENT_CANDIDATES = [
+  "CHARACTER_MESSAGE_RENDERED",
+  "MESSAGE_RECEIVED",
+  "MESSAGE_UPDATED",
+];
 const CHAT_EVENT_CANDIDATES = ["CHAT_CHANGED", "CHAT_LOADED"];
 
 let settings: ExtensionSettings = { ...DEFAULT_EXTENSION_SETTINGS };
 
 const logger = createLogger(EXTENSION_NAME, () => settings.debug_mode);
 const services = createServices();
+const subscribedRuntimeEvents = new Set<unknown>();
+const lastProcessedMessageByChat = new Map<string, string>();
+
+function getExtensionRuntimePath(): string {
+  const currentScriptUrl = new URL(import.meta.url);
+  const match = currentScriptUrl.pathname.match(/\/scripts\/extensions\/(.+)\/index\.js$/);
+
+  if (!match?.[1]) {
+    return "third-party/scene-state-extension";
+  }
+
+  return decodeURIComponent(match[1]);
+}
+
+const EXTENSION_PATH = getExtensionRuntimePath();
 
 function readBooleanSetting(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
@@ -123,8 +143,36 @@ function bindSettingsUi(): void {
 }
 
 async function renderSettings(): Promise<void> {
-  const html = await renderExtensionTemplateAsync(EXTENSION_NAME, "settings");
-  $(SETTINGS_ROOT_SELECTOR).append(html);
+  if ($("#scene-state-extension_settings").length > 0) {
+    bindSettingsUi();
+    return;
+  }
+
+  let html = "";
+  try {
+    html = await renderExtensionTemplateAsync(EXTENSION_PATH, "settings");
+  } catch (error) {
+    console.error(`[${EXTENSION_NAME}] Failed to render settings template.`, error);
+    return;
+  }
+
+  const settingsRoot =
+    $(SETTINGS_ROOT_SELECTOR).length > 0
+      ? $(SETTINGS_ROOT_SELECTOR)
+      : $("#extensions_settings");
+
+  if (settingsRoot.length === 0) {
+    console.error(`[${EXTENSION_NAME}] Settings root container was not found.`, {
+      primarySelector: SETTINGS_ROOT_SELECTOR,
+      fallbackSelector: "#extensions_settings",
+    });
+    return;
+  }
+
+  settingsRoot.append(html);
+  console.log(`[${EXTENSION_NAME}] Settings template mounted.`, {
+    rootId: settingsRoot.attr("id"),
+  });
   bindSettingsUi();
 }
 
@@ -164,6 +212,16 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
     return;
   }
 
+  const messageSignature = getMessageDebugSignature(message);
+  if (lastProcessedMessageByChat.get(chatId) === messageSignature) {
+    logger.debug("Skipped duplicate character message event.", {
+      chatId,
+      messageSignature,
+    });
+    return;
+  }
+
+  lastProcessedMessageByChat.set(chatId, messageSignature);
   initializeChatStateFromContext(context);
 
   const analysisResult = await services.analyzer.analyze({
@@ -174,6 +232,11 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
   });
 
   logger.debug("Analyzer result received.", { chatId, analysisResult });
+
+  services.stateStore.applyDiff(chatId, analysisResult.diff, {
+    sourceMessageId: getMessageSourceId(message),
+    confidence: 0,
+  });
 
   const currentState = services.stateStore.getState(chatId);
   if (!currentState) {
@@ -204,7 +267,16 @@ function subscribeIfAvailable(
     return;
   }
 
+  if (subscribedRuntimeEvents.has(runtimeEvent)) {
+    logger.debug("Skipped duplicate runtime event subscription.", {
+      eventName,
+      runtimeEvent,
+    });
+    return;
+  }
+
   eventSource.on(runtimeEvent, handler);
+  subscribedRuntimeEvents.add(runtimeEvent);
   logger.debug("Subscribed to runtime event.", { eventName });
 }
 
@@ -230,7 +302,6 @@ function registerEventHandlers(): void {
 
 jQuery(async () => {
   extension_settings[EXTENSION_NAME] = extension_settings[EXTENSION_NAME] ?? {};
-  await loadExtensionSettings(EXTENSION_NAME);
 
   settings = readStoredSettings();
   persistSettings(settings);
