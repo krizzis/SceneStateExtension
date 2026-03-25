@@ -212,9 +212,22 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
     return;
   }
 
+  const triggerRawIndex = getMessageIndexFromPayload(payload, context);
+  if (triggerRawIndex === null) {
+    logger.debug("Skipped analysis because trigger message index could not be resolved.", {
+      chatId,
+      payload,
+    });
+    return;
+  }
+
   const message = getLatestMessageFromPayload(payload, context);
   if (!isCharacterMessage(message)) {
-    logger.debug("Skipped non-character message.", { chatId, payload });
+    logger.debug("Skipped non-character message.", {
+      chatId,
+      payload,
+      triggerRawIndex,
+    });
     return;
   }
 
@@ -229,15 +242,6 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
 
   lastProcessedMessageByChat.set(chatId, messageSignature);
   initializeChatStateFromContext(context);
-
-  const triggerRawIndex = getMessageIndexFromPayload(payload, context);
-  if (triggerRawIndex === null) {
-    logger.debug("Skipped analysis because trigger message index could not be resolved.", {
-      chatId,
-      payload,
-    });
-    return;
-  }
 
   const turns = services.contextCollector.collect(
     getAnalysisMessages(context),
@@ -344,3 +348,4 @@ jQuery(async () => {
 
   logger.debug("Extension initialized.", { settings });
 });
+

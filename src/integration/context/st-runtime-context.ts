@@ -141,8 +141,7 @@ export function getMessageIndexFromPayload(
     }
   }
 
-  const chat = getChatMessages(context);
-  return chat.length > 0 ? chat.length - 1 : null;
+  return null;
 }
 
 export function getLatestMessageFromPayload(
@@ -151,11 +150,11 @@ export function getLatestMessageFromPayload(
 ): unknown {
   const messageIndex = getMessageIndexFromPayload(payload, context);
 
-  if (messageIndex !== null) {
-    return getMessageByIndex(context, messageIndex) ?? getLatestMessageFromContext(context);
+  if (messageIndex === null) {
+    return null;
   }
 
-  return getLatestMessageFromContext(context);
+  return getMessageByIndex(context, messageIndex);
 }
 
 export function isCharacterMessage(message: unknown): boolean {
@@ -287,3 +286,5 @@ export function getMessageDebugSignature(message: unknown): string {
 
   return parts.join("|");
 }
+
+
