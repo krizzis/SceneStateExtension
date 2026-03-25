@@ -46,6 +46,28 @@ Build output is written to:
 - `dist/settings.html`
 - `dist/style.css`
 
+## Release Branch Build
+
+The `codex/release` branch is intended to be installable directly through the SillyTavern Git extension installer.
+
+On that branch, run:
+
+```bash
+npm run build:release
+```
+
+This does two things:
+
+- builds the extension into `dist/`
+- copies the built runtime entry file to the repository root as `index.js`
+
+The installer-facing runtime files expected in the repo root are:
+
+- `manifest.json`
+- `index.js`
+- `settings.html`
+- `style.css`
+
 ## Type Check
 
 ```bash
