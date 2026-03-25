@@ -16,9 +16,11 @@ import {
   getActiveChatId,
   getCharacterDescriptionText,
   getLatestMessageFromPayload,
+  getMessageDebugSignature,
+  getMessageSourceId,
   getScenarioText,
   isCharacterMessage,
-} from "./src/integration/context/st-context";
+} from "./src/integration/context/st-runtime-context";
 import { createLogger } from "./src/integration/logging/logger";
 import {
   DEFAULT_EXTENSION_SETTINGS,
@@ -28,13 +30,19 @@ import {
 
 const EXTENSION_NAME = "scene-state-extension";
 const SETTINGS_ROOT_SELECTOR = "#extensions_settings2";
-const MESSAGE_EVENT_CANDIDATES = ["MESSAGE_RECEIVED", "CHARACTER_MESSAGE_RENDERED"];
+const MESSAGE_EVENT_CANDIDATES = [
+  "CHARACTER_MESSAGE_RENDERED",
+  "MESSAGE_RECEIVED",
+  "MESSAGE_UPDATED",
+];
 const CHAT_EVENT_CANDIDATES = ["CHAT_CHANGED", "CHAT_LOADED"];
 
 let settings: ExtensionSettings = { ...DEFAULT_EXTENSION_SETTINGS };
 
 const logger = createLogger(EXTENSION_NAME, () => settings.debug_mode);
 const services = createServices();
+const subscribedRuntimeEvents = new Set<unknown>();
+const lastProcessedMessageByChat = new Map<string, string>();
 
 function readBooleanSetting(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
@@ -123,8 +131,22 @@ function bindSettingsUi(): void {
 }
 
 async function renderSettings(): Promise<void> {
+  if ($("#scene-state-extension_settings").length > 0) {
+    bindSettingsUi();
+    return;
+  }
+
   const html = await renderExtensionTemplateAsync(EXTENSION_NAME, "settings");
-  $(SETTINGS_ROOT_SELECTOR).append(html);
+  const settingsRoot = $(SETTINGS_ROOT_SELECTOR);
+
+  if (settingsRoot.length === 0) {
+    logger.debug("Settings root container was not found.", {
+      selector: SETTINGS_ROOT_SELECTOR,
+    });
+    return;
+  }
+
+  settingsRoot.append(html);
   bindSettingsUi();
 }
 
@@ -164,6 +186,16 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
     return;
   }
 
+  const messageSignature = getMessageDebugSignature(message);
+  if (lastProcessedMessageByChat.get(chatId) === messageSignature) {
+    logger.debug("Skipped duplicate character message event.", {
+      chatId,
+      messageSignature,
+    });
+    return;
+  }
+
+  lastProcessedMessageByChat.set(chatId, messageSignature);
   initializeChatStateFromContext(context);
 
   const analysisResult = await services.analyzer.analyze({
@@ -174,6 +206,11 @@ async function handleMessageEvent(payload: unknown): Promise<void> {
   });
 
   logger.debug("Analyzer result received.", { chatId, analysisResult });
+
+  services.stateStore.applyDiff(chatId, analysisResult.diff, {
+    sourceMessageId: getMessageSourceId(message),
+    confidence: 0,
+  });
 
   const currentState = services.stateStore.getState(chatId);
   if (!currentState) {
@@ -204,7 +241,16 @@ function subscribeIfAvailable(
     return;
   }
 
+  if (subscribedRuntimeEvents.has(runtimeEvent)) {
+    logger.debug("Skipped duplicate runtime event subscription.", {
+      eventName,
+      runtimeEvent,
+    });
+    return;
+  }
+
   eventSource.on(runtimeEvent, handler);
+  subscribedRuntimeEvents.add(runtimeEvent);
   logger.debug("Subscribed to runtime event.", { eventName });
 }
 
