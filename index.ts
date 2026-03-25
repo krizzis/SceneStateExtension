@@ -29,6 +29,7 @@ import {
 } from "./src/shared/models/settings";
 
 const EXTENSION_NAME = "scene-state-extension";
+const EXTENSION_PATH = "third-party/scene-state-extension";
 const SETTINGS_ROOT_SELECTOR = "#extensions_settings2";
 const MESSAGE_EVENT_CANDIDATES = [
   "CHARACTER_MESSAGE_RENDERED",
@@ -136,17 +137,31 @@ async function renderSettings(): Promise<void> {
     return;
   }
 
-  const html = await renderExtensionTemplateAsync(EXTENSION_NAME, "settings");
-  const settingsRoot = $(SETTINGS_ROOT_SELECTOR);
+  let html = "";
+  try {
+    html = await renderExtensionTemplateAsync(EXTENSION_PATH, "settings");
+  } catch (error) {
+    console.error(`[${EXTENSION_NAME}] Failed to render settings template.`, error);
+    return;
+  }
+
+  const settingsRoot =
+    $(SETTINGS_ROOT_SELECTOR).length > 0
+      ? $(SETTINGS_ROOT_SELECTOR)
+      : $("#extensions_settings");
 
   if (settingsRoot.length === 0) {
-    logger.debug("Settings root container was not found.", {
-      selector: SETTINGS_ROOT_SELECTOR,
+    console.error(`[${EXTENSION_NAME}] Settings root container was not found.`, {
+      primarySelector: SETTINGS_ROOT_SELECTOR,
+      fallbackSelector: "#extensions_settings",
     });
     return;
   }
 
   settingsRoot.append(html);
+  console.log(`[${EXTENSION_NAME}] Settings template mounted.`, {
+    rootId: settingsRoot.attr("id"),
+  });
   bindSettingsUi();
 }
 
